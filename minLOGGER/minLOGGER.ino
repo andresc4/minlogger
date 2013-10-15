@@ -90,7 +90,7 @@ void home_check()
             log_alt_prev = log_alt;
         } else {
             if (++log_alt_cnt >= 30) {
-		log_home_millis = millis();
+		log_got_home_millis = millis();
 		// take stable altitudes as home altitudes
                 log_home_alt = log_alt; 
 #ifdef BAROMETER
