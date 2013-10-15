@@ -31,6 +31,7 @@
 int logger_init(void);
 int logger_read(void);
 int logger_write(void);
+float logger_get_alt(void);
 
 
 #endif /* LOGGER_H_ */

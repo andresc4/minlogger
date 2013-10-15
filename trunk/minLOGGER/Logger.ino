@@ -72,7 +72,7 @@ int logger_init(void) {
 	} while (SD.exists(fileName));
 
 	if (logFile = SD.open(fileName, FILE_WRITE)) {
-		logFile.println("Minutes:Seconds,Latitude,Longitude,Altitude,FixType,SatCnt");
+		logFile.println("Latitude,Longitude,Altitude,Time,FixType,SatCnt");
 		logFile.flush();
 	} else {
 		return ERROR_SD_WRITE;		// ERROR can't write
@@ -80,10 +80,24 @@ int logger_init(void) {
 
 #ifdef BAROMETER
 	myBarometer.init();
+	log_pressure = myBarometer.bmp085GetPressure(myBarometer.bmp085ReadUP());
 #endif
 	
 	return 0;
 }
+
+
+#ifdef BAROMETER
+void baro_read(void) {
+	static long lastread = 0;
+	
+	if (millis() - lastread < BARO_READ_MS) return;
+	lastread = millis();
+
+	//log_temperature = myBarometer.bmp085GetTemperature(myBarometer.bmp085ReadUT()) * .1 + log_temperature * .9;
+	log_pressure = myBarometer.bmp085GetPressure(myBarometer.bmp085ReadUP()) * .1 + log_pressure * .9;
+}
+#endif
 
 
 int logger_read(void) {
@@ -91,6 +105,10 @@ int logger_read(void) {
 	// grabbing gps data
 	while (Serial.available() > 0) {
 		uint8_t c = Serial.read();
+	
+#ifdef BAROMETER
+		baro_read();
+#endif
 		
 #ifdef GPS_PROTOCOL_DJI
 		if (parse_dji(c) == PARSER_COMPLETE_SET) {
@@ -143,6 +161,10 @@ int logger_read(void) {
 		}
 #endif
 	}
+	
+#ifdef BAROMETER
+	baro_read();
+#endif
 
         return 0;
 }
@@ -159,21 +181,28 @@ int logger_write(void) {
 	
 	if (logFile) {
 		flight_seconds = (millis() - log_got_home_millis) / 1000;
-		sprintf(flight_time, "%2u:%02u", ((int)(flight_seconds/60))%60, flight_seconds%60);
+		sprintf(flight_time, "%02u:%02u", ((int)(flight_seconds/60))%60, flight_seconds%60);
 		
-		logFile.print(flight_time);
-		logFile.print(",");
 		logFile.print(log_lat, 8);
 		logFile.print(",");
 		logFile.print(log_lon, 8);
 		logFile.print(",");
 #ifdef BAROMETER
-		log_baro_pressure = myBarometer.bmp085GetPressure(myBarometer.bmp085ReadUP());
-		log_baro_alt = myBarometer.calcAltitude(log_baro_pressure);
-		logFile.print(log_baro_alt - log_baro_home_alt);		// baro altitude over start
+		logFile.print(myBarometer.calcAltitude(log_pressure) - log_home_alt);
 #else
-		logFile.print(log_alt - log_home_alt);				// GPS altitude over start
+		logFile.print(log_alt - log_home_alt);
 #endif
+
+#if 0
+		logFile.print(" - ");
+		logFile.print(myBarometer.calcAltitude(myBarometer.bmp085GetPressure(myBarometer.bmp085ReadUP())));
+		logFile.print(" - ");
+		logFile.print(myBarometer.bmp085GetPressure(myBarometer.bmp085ReadUP()));
+		logFile.print(" - ");
+#endif
+
+		logFile.print(",");
+		logFile.print(flight_time);
 		logFile.print(",");
 		logFile.print(log_fix_type);
 		logFile.print(",");
@@ -189,4 +218,13 @@ int logger_write(void) {
 	}
 	
         return 0;
+}
+
+
+float logger_get_alt(void) {
+#ifdef BAROMETER
+	return myBarometer.calcAltitude(log_pressure);
+#else
+	return log_alt;
+#endif
 }

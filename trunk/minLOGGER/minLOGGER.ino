@@ -82,21 +82,16 @@ void home_check()
     // criteria for a stable home position:
     //  - GPS fix
     //  - with at least 5 satellites
-    //  - log_alt stable for 30 * 100ms = 3s
-    //  - log_alt stable means the delta is lower 0.5m
+    //  - altitude stable for 30 * 100ms = 3s
+    //  - altitude stable means the delta is lower 0.5m
     if (log_fix_type > 1 && log_satellites_visible >= 5 && log_alt_cnt < 30) {
-        if (fabs(log_alt_prev - log_alt) > 0.5) {
+        if (fabs(log_alt_prev - logger_get_alt()) > 0.5) {
             log_alt_cnt = 0;
-            log_alt_prev = log_alt;
+            log_alt_prev = logger_get_alt();
         } else {
             if (++log_alt_cnt >= 30) {
 		log_got_home_millis = millis();
-		// take stable altitudes as home altitudes
-                log_home_alt = log_alt; 
-#ifdef BAROMETER
-		log_baro_pressure = myBarometer.bmp085GetPressure(myBarometer.bmp085ReadUP());
-		log_baro_home_alt = myBarometer.calcAltitude(log_baro_pressure);
-#endif
+                log_home_alt = logger_get_alt();		// take stable altitude as home altitude
 	        log_got_home = 1;
             }
         }
@@ -107,6 +102,7 @@ void home_check()
 void loop() 
 {
     logger_read();
+
     if (!log_got_home) {
 	home_check();
     } else {

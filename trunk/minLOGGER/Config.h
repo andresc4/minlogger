@@ -6,6 +6,8 @@
 #define LOGGING_MS		100			// -> 10 Hz logging
 #define FLUSH_CNT		100			// SD flush is performed every LOGGING_MS * FLUSH_CNT ms
 
+#define BARO_READ_MS		100			// -> 10 Hz baro reading
+
 
 // ground tested but not in flight because of weather conditions !!!
 // heading needs some work !!!
