@@ -90,7 +90,13 @@ void home_check()
             log_alt_prev = log_alt;
         } else {
             if (++log_alt_cnt >= 30) {
-                log_home_alt = log_alt;  	// take this stable log_alt as log_home_alt
+		log_home_millis = millis();
+		// take stable altitudes as home altitudes
+                log_home_alt = log_alt; 
+#ifdef BAROMETER
+		log_baro_pressure = myBarometer.bmp085GetPressure(myBarometer.bmp085ReadUP());
+		log_baro_home_alt = myBarometer.calcAltitude(log_baro_pressure);
+#endif
 	        log_got_home = 1;
             }
         }

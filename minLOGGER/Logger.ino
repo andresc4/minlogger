@@ -72,7 +72,7 @@ int logger_init(void) {
 	} while (SD.exists(fileName));
 
 	if (logFile = SD.open(fileName, FILE_WRITE)) {
-		logFile.print("Latitude,Longitude,Altitude,FixType,SatCnt");
+		logFile.print("Minutes:Seconds,Latitude,Longitude,Altitude,FixType,SatCnt");
 #ifdef BAROMETER
 		logFile.print(",BaroAltitude");
 #endif
@@ -147,12 +147,6 @@ int logger_read(void) {
 		}
 #endif
 	}
-	
-#ifdef BAROMETER
-	log_baro_temperature = myBarometer.bmp085GetTemperature(myBarometer.bmp085ReadUT());	// get the temperature, bmp085ReadUT MUST be called first
-	log_baro_pressure = myBarometer.bmp085GetPressure(myBarometer.bmp085ReadUP());		// get the temperature
-	log_baro_alt = myBarometer.calcAltitude(log_baro_pressure);				// uncompensated caculation [m]
-#endif
 
         return 0;
 }
@@ -161,25 +155,38 @@ int logger_read(void) {
 int logger_write(void) {
 	static long lastlog = 0;
 	static uint8_t flush_cnt = 0;
+	long	flight_seconds;
+	uint8_t	flight_minutes;
 	
 	if (millis() - lastlog < LOGGING_MS) return 0;
 	lastlog = millis();
 	
 	if (logFile) {
+		flight_seconds = (millis() - log_got_home_millis) / 1000;
+		flight_minutes = flight_seconds / 60;
+		flight_seconds = flight_seconds % 60;
+
+		logFile.print(flight_minutes);
+		logFile.print(":");
+		logFile.print(flight_seconds);
+		logFile.print(",");
 		logFile.print(log_lat, 8);
 		logFile.print(",");
 		logFile.print(log_lon, 8);
 		logFile.print(",");
-		logFile.print(log_alt);
+#ifdef BAROMETER
+		log_baro_pressure = myBarometer.bmp085GetPressure(myBarometer.bmp085ReadUP());
+		log_baro_alt = myBarometer.calcAltitude(log_baro_pressure);
+		logFile.print(log_baro_alt - log_baro_home_alt);		// baro altitude over start
+#else
+		logFile.print(log_alt - log_home_alt);				// GPS altitude over start
+#endif
 		logFile.print(",");
 		logFile.print(log_fix_type);
 		logFile.print(",");
 		logFile.print(log_satellites_visible);
-#ifdef BAROMETER
-		logFile.print(",");
-		logFile.print(log_baro_alt);
-#endif
 		logFile.println();
+		
 		if (flush_cnt++ >= FLUSH_CNT) {
 			logFile.flush();
 			flush_cnt = 0;
