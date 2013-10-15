@@ -4,6 +4,7 @@
 
 
 static uint8_t      log_got_home = 0;               // home found
+static long         log_got_home_millis = 0;        // timestamp of got home
 
 static uint8_t      log_fix_type = 0;               // GPS lock
 static uint8_t      log_satellites_visible = 0;     // number of satelites
