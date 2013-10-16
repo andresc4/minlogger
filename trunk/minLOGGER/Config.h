@@ -6,7 +6,9 @@
 #define LOGGING_MS		100			// -> 10 Hz logging
 #define FLUSH_CNT		100			// SD flush is performed every LOGGING_MS * FLUSH_CNT ms
 
-#define BARO_READ_MS		100			// -> 10 Hz baro reading
+// Attention: You have to set 'const unsigned char OSS = 3;' in Barometer.h to get good results
+// To do so use the Barometer_Sensor library of my committed code!
+#define BARO_READ_MS		50			// max every 50ms baro reading (for oversampling = 3 the pressure conversion time is 25.5ms)
 
 
 // ground tested but not in flight because of weather conditions !!!
