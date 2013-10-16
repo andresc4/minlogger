@@ -80,7 +80,6 @@ int logger_init(void) {
 
 #ifdef BAROMETER
 	myBarometer.init();
-	log_pressure = myBarometer.bmp085GetPressure(myBarometer.bmp085ReadUP());
 #endif
 	
 	return 0;

@@ -24,7 +24,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-const unsigned char OSS = 0;
+const unsigned char OSS = 3;	// for oversampling = 3 the pressure conversion time is 25.5ms
 #define BMP085_ADDRESS 0x77
 class Barometer
 {
